@@ -1,0 +1,36 @@
+# Code
+
+Code to flatten the database: 
+
+```{r flattendata, eval = FALSE}
+con = dbConnect(SQLite(), dbname = "exercise01.sqlite")
+dbExecute(con, "CREATE TABLE flat (id INT PRIMARY KEY,
+                                   age INT,
+                                   workclass NCHAR(50),
+                                   education NCHAR(50),
+                                   marital_status NCHAR(50), 
+                                   occupation NCHAR(50), 
+                                   relationship NCHAR(50), 
+                                   race NCHAR(30), 
+                                   sex NCHAR(10), 
+                                   capital_gain INT, 
+                                   capital_loss INT,
+                                   hours_week INT,
+                                   country NCHAR(60), 
+                                   over_50k INT);")
+
+dbExecute(con, "INSERT INTO flat
+                SELECT records.id, records.age, w.name, e.name, m.name, o.name, 
+                       re.name, r.name, s.name, capital_gain, capital_loss,
+                       hours_week, c.name, over_50k
+                FROM countries AS c, education_levels AS e, marital_statuses AS m, 
+                     occupations AS o, races AS r, records, relationships AS re, 
+                     sexes AS s, workclasses AS w
+                WHERE records.workclass_id = w.id AND records.education_level_id = e.id
+                      AND records.marital_status_id = m.id AND records.occupation_id = o.id
+                      AND records.relationship_id = re.id AND records.race_id = r.id 
+                      AND records.sex_id = s.id AND records.country_id = c.id;")
+
+flat = dbGetQuery(con, "SELECT * FROM flat;")
+write.csv(flat, file = "flat.csv", row.names = FALSE)
+```
