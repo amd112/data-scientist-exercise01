@@ -2,9 +2,42 @@
 site: bookdown::bookdown_site
 output:
   bookdown::gitbook: default
+new_session: no
 ---
 
-# Data {-}
-hello testing
+```{r libraries, include = FALSE}
+library(randomForest)
+library(e1071)
+library(ggplot2)
+set.seed(50)
+```
 
-wow
+# Predicting Income From 1996 US Census Data {-}
+```{r importing, echo = FALSE}
+flat = read.csv("flat.csv")[, -1]
+flat$over_50k = as.factor(flat$over_50k)
+```
+
+<div style= "float:right;position: relative;">
+```{r census_sample, echo = FALSE, fig.height=3, fig.width=6}
+temp = as.data.frame(summary(flat$race)/nrow(flat))
+names(temp) = c("percentages")
+temp$race = rownames(temp)
+rownames(temp) = c()
+temp$year = 1996
+ninety = data.frame(percentages = c(0.008, 0.029, 0.121, 0.039, 0.803), race = temp$race, year = 1990)
+thou = data.frame(percentages = c(0.009, 0.037, 0.123, 0.08, 0.751), race = temp$race, year = 2000)
+temp = rbind(temp, ninety, thou)
+temp$year = as.factor(temp$year)
+
+#source 1990, page 3: https://www2.census.gov/library/publications/decennial/1990/cp-1/cp-1-1.pdf
+#source 2000, page 2: https://www.census.gov/prod/2002pubs/c2kprof00-us.pdf
+ggplot(temp) + geom_bar(aes(x = year, y = percentages, fill = race), position = "stack", stat = "identity") + ylim(0, 1) + xlab("Census Year") + ylab("Percent")
+```
+</div>
+
+exploratory analysis + summary statistics
+
+split in to test training and validation
+
+model to predict over or under 50k

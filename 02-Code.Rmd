@@ -1,5 +1,8 @@
 # Code {-}
 
+```{r ref.label="libraries",eval=FALSE}
+```
+
 Code to flatten the database: 
 
 ```{r flattendata, eval = FALSE}
@@ -33,4 +36,13 @@ dbExecute(con, "INSERT INTO flat
 
 flat = dbGetQuery(con, "SELECT * FROM flat;")
 write.csv(flat, file = "flat.csv", row.names = FALSE)
+```
+
+```{r ref.label="importing",eval=FALSE}
+```
+
+```{r ref.label="census_sample",eval=FALSE}
+```
+
+```{r ref.label="initial_models",eval=FALSE}
 ```

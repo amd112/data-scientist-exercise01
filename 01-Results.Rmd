@@ -1,23 +1,14 @@
-# Results {-}
-
-```{r libraries, include = FALSE}
-library(knitr)
-library(RSQLite)
-library(DBI)
-library(randomForest)
-library(e1071)
-```
+# Modeling {-}
 
 
-```{r importflat, eval = FALSE}
-flat = read.csv("flat.csv")[, -1]
-flat$over_50k = as.factor(flat$over_50k)
+```{r initial_models, eval = FALSE}
 s = 1:nrow(flat)
-train = sample(s, 2000)
-validate = sample(s[!s %in% train], 2000)
+train = sample(s, 6000)
+validate = sample(s[!s %in% train], 6000)
 test = s[(!s %in% train) & (!s %in% validate)]
 
-l = glm(over_50k ~ ., data = flat[1:20000, ], family = binomial(link = "logit"))
+
+l = glm(over_50k ~ ., data = flat[train, ], family = binomial(link = "logit"))
 p = predict(l, flat)
 
 x = rep(NA, 50)
