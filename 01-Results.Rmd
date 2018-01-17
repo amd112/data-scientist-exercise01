@@ -1,30 +1,44 @@
 # Modeling {-}
 
 
-```{r initial_models, eval = FALSE}
+```{r initial_models, echo = FALSE, eval = FALSE}
+#splitting the data in to train, validate, and testing groups
 s = 1:nrow(flat)
-train = sample(s, 6000)
-validate = sample(s[!s %in% train], 6000)
+train = sample(s, 12000)
+validate = sample(s[!s %in% train], 4000)
 test = s[(!s %in% train) & (!s %in% validate)]
+n = 10
 
-
+#creating and testing logisitic regression
 l = glm(over_50k ~ ., data = flat[train, ], family = binomial(link = "logit"))
-p = predict(l, flat)
+p = predict(l, flat[validate, ], type = "response")
+perc = (p>0.05) == (flat[validate, ]$over_50k == "1")
+1 -  sum(perc)/length(validate)
+#error of 0.361, not a great predictor.
 
-x = rep(NA, 50)
-for (i in 1:50) {
+#creating and testing a random forest as predictor
+x = rep(NA, n)
+for (i in 1:n) {
   rf = randomForest(over_50k ~ ., mtry = 7, ntree = 100, data = flat, subset = train)
-  x[i] = 1 - ((rf$confusion[1, 1] + rf$confusion[2, 2])/sum(rf$confusion))
+  rf2 = predict(rf, flat[validate,])
+  x[i] = 1 - sum(rf2 == flat[validate, ]$over_50k)/length(rf2)
 }
 hist(x)
+#mean error of 0.176, much better
 
-x = rep(NA, 50)
-for (i in 1:50) {
-  nb = naiveBayes(x= flat[, c(-14)], y = flat$over_50k, subset = train)
-  p = predict(nb, flat[, c(-14)])
-  t = table(pred=p,true=flat$over_50k)
-  x[i] = 1 - ((t[1, 1] + t[2, 2])/sum(t))
-}
-hist(x)
+#creating and testing a naive bayes model to predict over_50k
+nb = naiveBayes(x= flat[, c(-14)], y = flat$over_50k, subset = train)
+p = predict(nb, flat[, c(-14)])
+t = table(pred=p,true=flat$over_50k)
+1 - ((t[1, 1] + t[2, 2])/sum(t))
+#error of .172, basically same as the random forest.
 
 ```
+
+split in to test training and validation
+
+model to predict over or under 50k
+```{r final_model, echo = FALSE}
+
+```
+

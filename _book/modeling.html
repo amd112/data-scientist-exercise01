@@ -119,30 +119,8 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="modeling" class="section level1 unnumbered">
 <h1>Modeling</h1>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">s =<span class="st"> </span><span class="dv">1</span>:<span class="kw">nrow</span>(flat)
-train =<span class="st"> </span><span class="kw">sample</span>(s, <span class="dv">6000</span>)
-validate =<span class="st"> </span><span class="kw">sample</span>(s[!s %in%<span class="st"> </span>train], <span class="dv">6000</span>)
-test =<span class="st"> </span>s[(!s %in%<span class="st"> </span>train) &amp;<span class="st"> </span>(!s %in%<span class="st"> </span>validate)]
-
-
-l =<span class="st"> </span><span class="kw">glm</span>(over_50k ~<span class="st"> </span>., <span class="dt">data =</span> flat[train, ], <span class="dt">family =</span> <span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>))
-p =<span class="st"> </span><span class="kw">predict</span>(l, flat)
-
-x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">50</span>)
-for (i in <span class="dv">1</span>:<span class="dv">50</span>) {
-  rf =<span class="st"> </span><span class="kw">randomForest</span>(over_50k ~<span class="st"> </span>., <span class="dt">mtry =</span> <span class="dv">7</span>, <span class="dt">ntree =</span> <span class="dv">100</span>, <span class="dt">data =</span> flat, <span class="dt">subset =</span> train)
-  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span>((rf$confusion[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>rf$confusion[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(rf$confusion))
-}
-<span class="kw">hist</span>(x)
-
-x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">50</span>)
-for (i in <span class="dv">1</span>:<span class="dv">50</span>) {
-  nb =<span class="st"> </span><span class="kw">naiveBayes</span>(<span class="dt">x=</span> flat[, <span class="kw">c</span>(-<span class="dv">14</span>)], <span class="dt">y =</span> flat$over_50k, <span class="dt">subset =</span> train)
-  p =<span class="st"> </span><span class="kw">predict</span>(nb, flat[, <span class="kw">c</span>(-<span class="dv">14</span>)])
-  t =<span class="st"> </span><span class="kw">table</span>(<span class="dt">pred=</span>p,<span class="dt">true=</span>flat$over_50k)
-  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span>((t[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>t[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(t))
-}
-<span class="kw">hist</span>(x)</code></pre></div>
+<p>split in to test training and validation</p>
+<p>model to predict over or under 50k</p>
 
 </div>
             </section>

@@ -6,25 +6,38 @@ new_session: no
 ---
 
 ```{r libraries, include = FALSE}
+#importing relevant libraries
 library(randomForest)
 library(e1071)
 library(ggplot2)
+library(dplyr)
+library(gridExtra)
+
+#setting seed to ensure that randomized calculations are constant
 set.seed(50)
 ```
 
 # Predicting Income From 1996 US Census Data {-}
 ```{r importing, echo = FALSE}
+#importing file, removing column of ids
 flat = read.csv("flat.csv")[, -1]
 flat$over_50k = as.factor(flat$over_50k)
 ```
 
+Using an available US Census microdata sample from 1996, we attempt to predict if individuals have an income of above or below $50,000. Before broaching the ultimate modeling goal, it is important to understand the quirks of the data, and any data cleansing issues that must be addressed. 
+
 <div style= "float:right;position: relative;">
-```{r census_sample, echo = FALSE, fig.height=3, fig.width=6}
+```{r census_sample, echo = FALSE, fig.height=3, fig.width=5}
+#chunk is pushed right by the html wrapper
+
+#getting the summary of race distribution from the full data
 temp = as.data.frame(summary(flat$race)/nrow(flat))
 names(temp) = c("percentages")
 temp$race = rownames(temp)
 rownames(temp) = c()
 temp$year = 1996
+
+#appending the summaries of race distributions for 1990 and 2000
 ninety = data.frame(percentages = c(0.008, 0.029, 0.121, 0.039, 0.803), race = temp$race, year = 1990)
 thou = data.frame(percentages = c(0.009, 0.037, 0.123, 0.08, 0.751), race = temp$race, year = 2000)
 temp = rbind(temp, ninety, thou)
@@ -32,12 +45,31 @@ temp$year = as.factor(temp$year)
 
 #source 1990, page 3: https://www2.census.gov/library/publications/decennial/1990/cp-1/cp-1-1.pdf
 #source 2000, page 2: https://www.census.gov/prod/2002pubs/c2kprof00-us.pdf
+#plotting the summaries in comparison
 ggplot(temp) + geom_bar(aes(x = year, y = percentages, fill = race), position = "stack", stat = "identity") + ylim(0, 1) + xlab("Census Year") + ylab("Percent")
 ```
 </div>
 
-exploratory analysis + summary statistics
+Overall, the data doesn't follow some patterns we expect. By comparing the 1996 microdata sample to the aggregations of surrounding decennial census', we see this is likely not a random sample. There is significant underrepresentation of the black and 'other' race groups, as well as a clear overrepresentation of the male population (which composes `r round(sum(flat$sex == "Male")/nrow(flat) * 100, 2)`% of the sample).
 
-split in to test training and validation
+```{r incplot, echo = FALSE, fig.height=2.5, fig.width=8, warning = FALSE}
+temp = flat %>%
+select(over_50k, education_id) %>%
+group_by(education_id) %>%
+summarise(over_50k = sum(over_50k == "1")/(sum(over_50k == "1") + sum(over_50k == "0")))
 
-model to predict over or under 50k
+plot1 = ggplot(data = temp) + geom_line(aes(x = education_id, y = over_50k)) + xlab("Years of Education") + ylab("% Earning Over 50k") + ylim(0, 0.8)
+
+temp2 = flat %>%
+select(over_50k, hours_week) %>%
+group_by(hours_week) %>%
+summarise(over_50k = sum(over_50k == "1")/(sum(over_50k == "1") + sum(over_50k == "0")))
+
+plot2 = ggplot(data = temp2) + geom_line(aes(x = hours_week, y = over_50k)) + xlab("Hours worked/Week") + ylab("% Earning Over 50k") + ylim(0, 0.8) + xlim(0, 70)
+
+grid.arrange(plot1, plot2, ncol=2)
+```
+
+Exploring other common trends in earnings, we see expected relationships. Among participants with more years of education, there is a higher percentage of respondents with incomes over 50k. Similarly, there is some relationship between hours worked and percentage of respondents with incomes over 50k.
+
+Using these (and other) relationships in the data, we model the probability of an individual record having an income of over 10k. 

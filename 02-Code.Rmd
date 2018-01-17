@@ -1,16 +1,19 @@
 # Code {-}
 
-```{r ref.label="libraries",eval=FALSE}
+```{r ref.label="libraries", eval = FALSE}
 ```
 
 Code to flatten the database: 
 
 ```{r flattendata, eval = FALSE}
+library(DBI)
+library(RSQLite)
 con = dbConnect(SQLite(), dbname = "exercise01.sqlite")
 dbExecute(con, "CREATE TABLE flat (id INT PRIMARY KEY,
                                    age INT,
                                    workclass NCHAR(50),
                                    education NCHAR(50),
+                                   education_id INT,
                                    marital_status NCHAR(50), 
                                    occupation NCHAR(50), 
                                    relationship NCHAR(50), 
@@ -23,8 +26,8 @@ dbExecute(con, "CREATE TABLE flat (id INT PRIMARY KEY,
                                    over_50k INT);")
 
 dbExecute(con, "INSERT INTO flat
-                SELECT records.id, records.age, w.name, e.name, m.name, o.name, 
-                       re.name, r.name, s.name, capital_gain, capital_loss,
+                SELECT records.id, records.age, w.name, e.name, records.education_num, 
+                       m.name, o.name, re.name, r.name, s.name, capital_gain, capital_loss,
                        hours_week, c.name, over_50k
                 FROM countries AS c, education_levels AS e, marital_statuses AS m, 
                      occupations AS o, races AS r, records, relationships AS re, 
@@ -38,11 +41,14 @@ flat = dbGetQuery(con, "SELECT * FROM flat;")
 write.csv(flat, file = "flat.csv", row.names = FALSE)
 ```
 
-```{r ref.label="importing",eval=FALSE}
+```{r ref.label="importing", eval = FALSE}
 ```
 
-```{r ref.label="census_sample",eval=FALSE}
+```{r ref.label="census_sample", eval = FALSE}
 ```
 
-```{r ref.label="initial_models",eval=FALSE}
+```{r ref.label="initial_models", eval = FALSE}
+```
+
+```{r ref.label="final_model", eval = FALSE}
 ```
