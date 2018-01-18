@@ -122,11 +122,9 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
 <div id="predicting-income-from-1996-us-census-data" class="section level1 unnumbered">
 <h1>Predicting Income From 1996 US Census Data</h1>
 <p>Using an available US Census microdata sample from 1996, we attempt to predict if individuals have an income of above or below $50,000. Before broaching the ultimate modeling goal, it is important to understand the quirks of the data, and any data cleansing issues that must be addressed.</p>
-<div style="float:right;position: relative;">
-<p><img src="_main_files/figure-html/census_sample-1.png" width="480" /></p>
-</div>
+<p><img src="figure-html/census_sample-1.png" width="480" style="float:right;position: relative;"/></p>
 <p>Overall, the data doesn’t follow some patterns we expect. By comparing the 1996 microdata sample to the aggregations of surrounding decennial census’, we see this is likely not a random sample. There is significant underrepresentation of the black and ‘other’ race groups, as well as a clear overrepresentation of the male population (which composes 66.85% of the sample).</p>
-<p><img src="_main_files/figure-html/incplot-1.png" width="768" /></p>
+<p><img src="figure-html/incplot-1.png" width="768" /></p>
 <p>Exploring other common trends in earnings, we see expected relationships. Among participants with more years of education, there is a higher percentage of respondents with incomes over 50k. Similarly, there is some relationship between hours worked and percentage of respondents with incomes over 50k.</p>
 <p>Using these (and other) relationships in the data, we model the probability of an individual record having an income of over 50k. The final model used is a Random Forest, a group of decision trees returning the classification that the most trees agree on. Each decision tree recursively splits the data by independent variables, choosing each split as the one which best seperates the dependent categories. The ultimate model has an error rate of 17.3%</p>
 
