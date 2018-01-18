@@ -41,11 +41,24 @@ flat = dbGetQuery(con, "SELECT * FROM flat;")
 write.csv(flat, file = "flat.csv", row.names = FALSE)
 ```
 
+Code to bring in the flattened data:
 ```{r ref.label="importing", eval = FALSE}
 ```
 
+Code to generate census image:
 ```{r ref.label="census_sample", eval = FALSE}
 ```
 
+Code to generate income plot:
+```{r ref.label="incplot", eval = FALSE}
+```
+
+Code for final model, after tuning:
 ```{r ref.label="final_model", eval = FALSE}
 ```
+
+Sample of flat file:
+```{r, echo = FALSE}
+head(flat)
+```
+

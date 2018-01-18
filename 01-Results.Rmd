@@ -4,7 +4,7 @@ In order to predict if income is above or below 50,000 we build predictive model
 
 The initial models built include a logistic regression, a random forest, and a naive bayes classifier. Using these models on a training set and testing the results on a testing set, we find which models are initially competititve. 
 
-```{r, eval = FALSE}
+```{r models, warning = FALSE, message = FALSE}
 #splitting the data in to train, validate, and testing groups
 s = 1:nrow(flat)
 train = sample(s, 12000)
@@ -21,7 +21,7 @@ perc = (p>0.05) == (flat[validate, ]$over_50k == "1")
 #creating and testing a random forest as predictor
 x = rep(NA, n)
 for (i in 1:n) {
-  rf = randomForest(over_50k ~ ., mtry = 10, ntree = 50, data = flat, subset = train)
+  rf = randomForest(over_50k ~ ., mtry = 12, ntree = 30, data = flat, subset = train)
   rf2 = predict(rf, flat[validate,])
   x[i] = 1 - sum(rf2 == flat[validate, ]$over_50k)/length(rf2)
 }

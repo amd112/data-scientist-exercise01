@@ -162,9 +162,11 @@ con =<span class="st"> </span><span class="kw">dbConnect</span>(<span class="kw"
 
 flat =<span class="st"> </span><span class="kw">dbGetQuery</span>(con, <span class="st">&quot;SELECT * FROM flat;&quot;</span>)
 <span class="kw">write.csv</span>(flat, <span class="dt">file =</span> <span class="st">&quot;flat.csv&quot;</span>, <span class="dt">row.names =</span> <span class="ot">FALSE</span>)</code></pre></div>
+<p>Code to bring in the flattened data:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#importing file, removing column of ids</span>
 flat =<span class="st"> </span><span class="kw">read.csv</span>(<span class="st">&quot;flat.csv&quot;</span>)[, -<span class="dv">1</span>]
 flat$over_50k =<span class="st"> </span><span class="kw">as.factor</span>(flat$over_50k)</code></pre></div>
+<p>Code to generate census image:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#chunk is pushed right by the html wrapper</span>
 
 <span class="co">#getting the summary of race distribution from the full data</span>
@@ -183,37 +185,49 @@ temp$year =<span class="st"> </span><span class="kw">as.factor</span>(temp$year)
 <span class="co">#source 1990, page 3: https://www2.census.gov/library/publications/decennial/1990/cp-1/cp-1-1.pdf</span>
 <span class="co">#source 2000, page 2: https://www.census.gov/prod/2002pubs/c2kprof00-us.pdf</span>
 <span class="co">#plotting the summaries in comparison</span>
-<span class="kw">ggplot</span>(temp) +<span class="st"> </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">x =</span> year, <span class="dt">y =</span> percentages, <span class="dt">fill =</span> race), <span class="dt">position =</span> <span class="st">&quot;stack&quot;</span>, <span class="dt">stat =</span> <span class="st">&quot;identity&quot;</span>) +<span class="st"> </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="dv">1</span>) +<span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;Census Year&quot;</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Percent&quot;</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#splitting the data in to train, validate, and testing groups</span>
-s =<span class="st"> </span><span class="dv">1</span>:<span class="kw">nrow</span>(flat)
-train =<span class="st"> </span><span class="kw">sample</span>(s, <span class="dv">12000</span>)
-validate =<span class="st"> </span><span class="kw">sample</span>(s[!s %in%<span class="st"> </span>train], <span class="dv">4000</span>)
-test =<span class="st"> </span>s[(!s %in%<span class="st"> </span>train) &amp;<span class="st"> </span>(!s %in%<span class="st"> </span>validate)]
-n =<span class="st"> </span><span class="dv">10</span>
+<span class="kw">ggplot</span>(temp) +<span class="st"> </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">x =</span> year, <span class="dt">y =</span> percentages, <span class="dt">fill =</span> race), <span class="dt">position =</span> <span class="st">&quot;stack&quot;</span>, 
+                        <span class="dt">stat =</span> <span class="st">&quot;identity&quot;</span>) +<span class="st"> </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="dv">1</span>) +<span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;Census Year&quot;</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Percent&quot;</span>)</code></pre></div>
+<p>Code to generate income plot:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">temp =<span class="st"> </span>flat %&gt;%
+<span class="kw">select</span>(over_50k, education_id) %&gt;%
+<span class="kw">group_by</span>(education_id) %&gt;%
+<span class="kw">summarise</span>(<span class="dt">over_50k =</span> <span class="kw">sum</span>(over_50k ==<span class="st"> &quot;1&quot;</span>)/(<span class="kw">sum</span>(over_50k ==<span class="st"> &quot;1&quot;</span>) +<span class="st"> </span><span class="kw">sum</span>(over_50k ==<span class="st"> &quot;0&quot;</span>)))
 
-<span class="co">#creating and testing logisitic regression</span>
-l =<span class="st"> </span><span class="kw">glm</span>(over_50k ~<span class="st"> </span>., <span class="dt">data =</span> flat[train, ], <span class="dt">family =</span> <span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>))
-p =<span class="st"> </span><span class="kw">predict</span>(l, flat[validate, ], <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
-perc =<span class="st"> </span>(p&gt;<span class="fl">0.05</span>) ==<span class="st"> </span>(flat[validate, ]$over_50k ==<span class="st"> &quot;1&quot;</span>)
-<span class="dv">1</span> -<span class="st">  </span><span class="kw">sum</span>(perc)/<span class="kw">length</span>(validate)
-<span class="co">#error of 0.361, not a great predictor.</span>
+plot1 =<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> temp) +<span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> education_id, <span class="dt">y =</span> over_50k)) +<span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;Years of Education&quot;</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;% Earning Over 50k&quot;</span>) +<span class="st"> </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="fl">0.8</span>)
 
-<span class="co">#creating and testing a random forest as predictor</span>
-x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)
-for (i in <span class="dv">1</span>:n) {
-  rf =<span class="st"> </span><span class="kw">randomForest</span>(over_50k ~<span class="st"> </span>., <span class="dt">mtry =</span> <span class="dv">7</span>, <span class="dt">ntree =</span> <span class="dv">100</span>, <span class="dt">data =</span> flat, <span class="dt">subset =</span> train)
-  rf2 =<span class="st"> </span><span class="kw">predict</span>(rf, flat[validate,])
-  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span><span class="kw">sum</span>(rf2 ==<span class="st"> </span>flat[validate, ]$over_50k)/<span class="kw">length</span>(rf2)
-}
-<span class="kw">hist</span>(x)
-<span class="co">#mean error of 0.176, much better</span>
+temp2 =<span class="st"> </span>flat %&gt;%
+<span class="kw">select</span>(over_50k, hours_week) %&gt;%
+<span class="kw">group_by</span>(hours_week) %&gt;%
+<span class="kw">summarise</span>(<span class="dt">over_50k =</span> <span class="kw">sum</span>(over_50k ==<span class="st"> &quot;1&quot;</span>)/(<span class="kw">sum</span>(over_50k ==<span class="st"> &quot;1&quot;</span>) +<span class="st"> </span><span class="kw">sum</span>(over_50k ==<span class="st"> &quot;0&quot;</span>)))
 
-<span class="co">#creating and testing a naive bayes model to predict over_50k</span>
-nb =<span class="st"> </span><span class="kw">naiveBayes</span>(<span class="dt">x=</span> flat[, <span class="kw">c</span>(-<span class="dv">14</span>)], <span class="dt">y =</span> flat$over_50k, <span class="dt">subset =</span> train)
-p =<span class="st"> </span><span class="kw">predict</span>(nb, flat[, <span class="kw">c</span>(-<span class="dv">14</span>)])
-t =<span class="st"> </span><span class="kw">table</span>(<span class="dt">pred=</span>p,<span class="dt">true=</span>flat$over_50k)
-<span class="dv">1</span> -<span class="st"> </span>((t[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>t[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(t))
-<span class="co">#error of .172, basically same as the random forest.</span></code></pre></div>
+plot2 =<span class="st"> </span><span class="kw">ggplot</span>(<span class="dt">data =</span> temp2) +<span class="st"> </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x =</span> hours_week, <span class="dt">y =</span> over_50k)) +<span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;Hours worked/Week&quot;</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;% Earning Over 50k&quot;</span>) +<span class="st"> </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="fl">0.8</span>) +<span class="st"> </span><span class="kw">xlim</span>(<span class="dv">0</span>, <span class="dv">70</span>)
+
+<span class="kw">grid.arrange</span>(plot1, plot2, <span class="dt">ncol=</span><span class="dv">2</span>)</code></pre></div>
+<p>Code for final model, after tuning:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">rf =<span class="st"> </span><span class="kw">randomForest</span>(over_50k ~<span class="st"> </span>., <span class="dt">mtry =</span> <span class="dv">3</span>, <span class="dt">ntree =</span> <span class="dv">500</span>, <span class="dt">data =</span> flat, <span class="dt">subset =</span> train)
+rf2 =<span class="st"> </span><span class="kw">predict</span>(rf, flat[validate,])</code></pre></div>
+<p>Sample of flat file:</p>
+<pre><code>##   age        workclass education education_id     marital_status
+## 1  39        State-gov Bachelors           13      Never-married
+## 2  50 Self-emp-not-inc Bachelors           13 Married-civ-spouse
+## 3  38          Private   HS-grad            9           Divorced
+## 4  53          Private      11th            7 Married-civ-spouse
+## 5  28          Private Bachelors           13 Married-civ-spouse
+## 6  37          Private   Masters           14 Married-civ-spouse
+##          occupation  relationship  race    sex capital_gain capital_loss
+## 1      Adm-clerical Not-in-family White   Male         2174            0
+## 2   Exec-managerial       Husband White   Male            0            0
+## 3 Handlers-cleaners Not-in-family White   Male            0            0
+## 4 Handlers-cleaners       Husband Black   Male            0            0
+## 5    Prof-specialty          Wife Black Female            0            0
+## 6   Exec-managerial          Wife White Female            0            0
+##   hours_week       country over_50k
+## 1         40 United-States        0
+## 2         13 United-States        0
+## 3         40 United-States        0
+## 4         40 United-States        0
+## 5         40          Cuba        0
+## 6         40 United-States        0</code></pre>
 
 </div>
             </section>

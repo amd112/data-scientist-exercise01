@@ -119,8 +119,37 @@ code > span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Inf
             <section class="normal" id="section-">
 <div id="modeling" class="section level1 unnumbered">
 <h1>Modeling</h1>
-<p>split in to test training and validation</p>
-<p>model to predict over or under 50k</p>
+<p>In order to predict if income is above or below 50,000 we build predictive models.</p>
+<p>The initial models built include a logistic regression, a random forest, and a naive bayes classifier. Using these models on a training set and testing the results on a testing set, we find which models are initially competititve.</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#splitting the data in to train, validate, and testing groups</span>
+s =<span class="st"> </span><span class="dv">1</span>:<span class="kw">nrow</span>(flat)
+train =<span class="st"> </span><span class="kw">sample</span>(s, <span class="dv">12000</span>)
+validate =<span class="st"> </span><span class="kw">sample</span>(s[!s %in%<span class="st"> </span>train], <span class="dv">4000</span>)
+test =<span class="st"> </span>s[(!s %in%<span class="st"> </span>train) &amp;<span class="st"> </span>(!s %in%<span class="st"> </span>validate)]
+n =<span class="st"> </span><span class="dv">10</span>
+
+<span class="co">#creating and testing logisitic regression</span>
+l =<span class="st"> </span><span class="kw">glm</span>(over_50k ~<span class="st"> </span>., <span class="dt">data =</span> flat[train, ], <span class="dt">family =</span> <span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>))
+p =<span class="st"> </span><span class="kw">predict</span>(l, flat[validate, ], <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+perc =<span class="st"> </span>(p&gt;<span class="fl">0.05</span>) ==<span class="st"> </span>(flat[validate, ]$over_50k ==<span class="st"> &quot;1&quot;</span>)
+<span class="co">#error of 0.361, not a great predictor.</span>
+
+<span class="co">#creating and testing a random forest as predictor</span>
+x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)
+for (i in <span class="dv">1</span>:n) {
+  rf =<span class="st"> </span><span class="kw">randomForest</span>(over_50k ~<span class="st"> </span>., <span class="dt">mtry =</span> <span class="dv">12</span>, <span class="dt">ntree =</span> <span class="dv">30</span>, <span class="dt">data =</span> flat, <span class="dt">subset =</span> train)
+  rf2 =<span class="st"> </span><span class="kw">predict</span>(rf, flat[validate,])
+  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span><span class="kw">sum</span>(rf2 ==<span class="st"> </span>flat[validate, ]$over_50k)/<span class="kw">length</span>(rf2)
+}
+<span class="co">#mean error of 0.176, much better</span>
+
+<span class="co">#creating and testing a naive bayes model to predict over_50k</span>
+nb =<span class="st"> </span><span class="kw">naiveBayes</span>(<span class="dt">x=</span> flat[, <span class="kw">c</span>(-<span class="dv">14</span>)], <span class="dt">y =</span> flat$over_50k, <span class="dt">subset =</span> train)
+p =<span class="st"> </span><span class="kw">predict</span>(nb, flat[validate, <span class="kw">c</span>(-<span class="dv">14</span>)])
+t =<span class="st"> </span><span class="kw">table</span>(<span class="dt">pred=</span>p,<span class="dt">true=</span>flat[validate,]$over_50k)
+<span class="co">#error of 0.176, same as the random forest.</span></code></pre></div>
+<p>The logisitic regression model has an error rate of 0.361. The Random Forest has a mean error rate of 0.176325. The Naive Bayes has an error rate of 0.176. Given the much lower error rates of the Random Forest and Naive Bayes classifier, tuning the parameters of the forest is likely to give an improved error rate.</p>
+<p>After some tuning of parameters, the error rate of the model is 0.173</p>
 
 </div>
             </section>

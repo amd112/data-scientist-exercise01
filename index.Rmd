@@ -51,7 +51,7 @@ ggplot(temp) + geom_bar(aes(x = year, y = percentages, fill = race), position = 
 ```
 </div>
 
-Overall, the data doesn't follow some patterns we expect. By comparing the 1996 microdata sample to the aggregations of surrounding decennial census', we see this is likely not a random sample. There is significant underrepresentation of the black and 'other' race groups, as well as a clear overrepresentation of the male population (which composes r round(sum(flat$sex == "Male")/nrow(flat) * 100, 2)% of the sample).
+Overall, the data doesn't follow some patterns we expect. By comparing the 1996 microdata sample to the aggregations of surrounding decennial census', we see this is likely not a random sample. There is significant underrepresentation of the black and 'other' race groups, as well as a clear overrepresentation of the male population (which composes `r round(sum(flat$sex == "Male")/nrow(flat) * 100, 2)`% of the sample).
 
 ```{r incplot, echo = FALSE, fig.height=2.5, fig.width=8, warning = FALSE}
 temp = flat %>%
@@ -73,4 +73,4 @@ grid.arrange(plot1, plot2, ncol=2)
 
 Exploring other common trends in earnings, we see expected relationships. Among participants with more years of education, there is a higher percentage of respondents with incomes over 50k. Similarly, there is some relationship between hours worked and percentage of respondents with incomes over 50k.
 
-Using these (and other) relationships in the data, we model the probability of an individual record having an income of over 10k. 
+Using these (and other) relationships in the data, we model the probability of an individual record having an income of over 50k. The final model used is a Random Forest, a group of decision trees returning the classification that the most trees agree on. Each decision tree recursively splits the data by independent variables, choosing each split as the one which best seperates the dependent categories. The ultimate model has an error rate of 17.3%
