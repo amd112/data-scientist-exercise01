@@ -47,8 +47,5 @@ write.csv(flat, file = "flat.csv", row.names = FALSE)
 ```{r ref.label="census_sample", eval = FALSE}
 ```
 
-```{r ref.label="initial_models", eval = FALSE}
-```
-
 ```{r ref.label="final_model", eval = FALSE}
 ```

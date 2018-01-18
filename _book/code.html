@@ -184,30 +184,36 @@ temp$year =<span class="st"> </span><span class="kw">as.factor</span>(temp$year)
 <span class="co">#source 2000, page 2: https://www.census.gov/prod/2002pubs/c2kprof00-us.pdf</span>
 <span class="co">#plotting the summaries in comparison</span>
 <span class="kw">ggplot</span>(temp) +<span class="st"> </span><span class="kw">geom_bar</span>(<span class="kw">aes</span>(<span class="dt">x =</span> year, <span class="dt">y =</span> percentages, <span class="dt">fill =</span> race), <span class="dt">position =</span> <span class="st">&quot;stack&quot;</span>, <span class="dt">stat =</span> <span class="st">&quot;identity&quot;</span>) +<span class="st"> </span><span class="kw">ylim</span>(<span class="dv">0</span>, <span class="dv">1</span>) +<span class="st"> </span><span class="kw">xlab</span>(<span class="st">&quot;Census Year&quot;</span>) +<span class="st"> </span><span class="kw">ylab</span>(<span class="st">&quot;Percent&quot;</span>)</code></pre></div>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">s =<span class="st"> </span><span class="dv">1</span>:<span class="kw">nrow</span>(flat)
-train =<span class="st"> </span><span class="kw">sample</span>(s, <span class="dv">6000</span>)
-validate =<span class="st"> </span><span class="kw">sample</span>(s[!s %in%<span class="st"> </span>train], <span class="dv">6000</span>)
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co">#splitting the data in to train, validate, and testing groups</span>
+s =<span class="st"> </span><span class="dv">1</span>:<span class="kw">nrow</span>(flat)
+train =<span class="st"> </span><span class="kw">sample</span>(s, <span class="dv">12000</span>)
+validate =<span class="st"> </span><span class="kw">sample</span>(s[!s %in%<span class="st"> </span>train], <span class="dv">4000</span>)
 test =<span class="st"> </span>s[(!s %in%<span class="st"> </span>train) &amp;<span class="st"> </span>(!s %in%<span class="st"> </span>validate)]
+n =<span class="st"> </span><span class="dv">10</span>
 
-
+<span class="co">#creating and testing logisitic regression</span>
 l =<span class="st"> </span><span class="kw">glm</span>(over_50k ~<span class="st"> </span>., <span class="dt">data =</span> flat[train, ], <span class="dt">family =</span> <span class="kw">binomial</span>(<span class="dt">link =</span> <span class="st">&quot;logit&quot;</span>))
-p =<span class="st"> </span><span class="kw">predict</span>(l, flat)
+p =<span class="st"> </span><span class="kw">predict</span>(l, flat[validate, ], <span class="dt">type =</span> <span class="st">&quot;response&quot;</span>)
+perc =<span class="st"> </span>(p&gt;<span class="fl">0.05</span>) ==<span class="st"> </span>(flat[validate, ]$over_50k ==<span class="st"> &quot;1&quot;</span>)
+<span class="dv">1</span> -<span class="st">  </span><span class="kw">sum</span>(perc)/<span class="kw">length</span>(validate)
+<span class="co">#error of 0.361, not a great predictor.</span>
 
-x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">50</span>)
-for (i in <span class="dv">1</span>:<span class="dv">50</span>) {
+<span class="co">#creating and testing a random forest as predictor</span>
+x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, n)
+for (i in <span class="dv">1</span>:n) {
   rf =<span class="st"> </span><span class="kw">randomForest</span>(over_50k ~<span class="st"> </span>., <span class="dt">mtry =</span> <span class="dv">7</span>, <span class="dt">ntree =</span> <span class="dv">100</span>, <span class="dt">data =</span> flat, <span class="dt">subset =</span> train)
-  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span>((rf$confusion[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>rf$confusion[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(rf$confusion))
+  rf2 =<span class="st"> </span><span class="kw">predict</span>(rf, flat[validate,])
+  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span><span class="kw">sum</span>(rf2 ==<span class="st"> </span>flat[validate, ]$over_50k)/<span class="kw">length</span>(rf2)
 }
 <span class="kw">hist</span>(x)
+<span class="co">#mean error of 0.176, much better</span>
 
-x =<span class="st"> </span><span class="kw">rep</span>(<span class="ot">NA</span>, <span class="dv">50</span>)
-for (i in <span class="dv">1</span>:<span class="dv">50</span>) {
-  nb =<span class="st"> </span><span class="kw">naiveBayes</span>(<span class="dt">x=</span> flat[, <span class="kw">c</span>(-<span class="dv">14</span>)], <span class="dt">y =</span> flat$over_50k, <span class="dt">subset =</span> train)
-  p =<span class="st"> </span><span class="kw">predict</span>(nb, flat[, <span class="kw">c</span>(-<span class="dv">14</span>)])
-  t =<span class="st"> </span><span class="kw">table</span>(<span class="dt">pred=</span>p,<span class="dt">true=</span>flat$over_50k)
-  x[i] =<span class="st"> </span><span class="dv">1</span> -<span class="st"> </span>((t[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>t[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(t))
-}
-<span class="kw">hist</span>(x)</code></pre></div>
+<span class="co">#creating and testing a naive bayes model to predict over_50k</span>
+nb =<span class="st"> </span><span class="kw">naiveBayes</span>(<span class="dt">x=</span> flat[, <span class="kw">c</span>(-<span class="dv">14</span>)], <span class="dt">y =</span> flat$over_50k, <span class="dt">subset =</span> train)
+p =<span class="st"> </span><span class="kw">predict</span>(nb, flat[, <span class="kw">c</span>(-<span class="dv">14</span>)])
+t =<span class="st"> </span><span class="kw">table</span>(<span class="dt">pred=</span>p,<span class="dt">true=</span>flat$over_50k)
+<span class="dv">1</span> -<span class="st"> </span>((t[<span class="dv">1</span>, <span class="dv">1</span>] +<span class="st"> </span>t[<span class="dv">2</span>, <span class="dv">2</span>])/<span class="kw">sum</span>(t))
+<span class="co">#error of .172, basically same as the random forest.</span></code></pre></div>
 
 </div>
             </section>

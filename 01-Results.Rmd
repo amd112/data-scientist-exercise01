@@ -1,7 +1,10 @@
 # Modeling {-}
 
+In order to predict if income is above or below 50,000 we build predictive models. 
 
-```{r initial_models, echo = FALSE, eval = FALSE}
+The initial models built include a logistic regression, a random forest, and a naive bayes classifier. Using these models on a training set and testing the results on a testing set, we find which models are initially competititve. 
+
+```{r, eval = FALSE}
 #splitting the data in to train, validate, and testing groups
 s = 1:nrow(flat)
 train = sample(s, 12000)
@@ -13,32 +16,29 @@ n = 10
 l = glm(over_50k ~ ., data = flat[train, ], family = binomial(link = "logit"))
 p = predict(l, flat[validate, ], type = "response")
 perc = (p>0.05) == (flat[validate, ]$over_50k == "1")
-1 -  sum(perc)/length(validate)
 #error of 0.361, not a great predictor.
 
 #creating and testing a random forest as predictor
 x = rep(NA, n)
 for (i in 1:n) {
-  rf = randomForest(over_50k ~ ., mtry = 7, ntree = 100, data = flat, subset = train)
+  rf = randomForest(over_50k ~ ., mtry = 10, ntree = 50, data = flat, subset = train)
   rf2 = predict(rf, flat[validate,])
   x[i] = 1 - sum(rf2 == flat[validate, ]$over_50k)/length(rf2)
 }
-hist(x)
 #mean error of 0.176, much better
 
 #creating and testing a naive bayes model to predict over_50k
 nb = naiveBayes(x= flat[, c(-14)], y = flat$over_50k, subset = train)
-p = predict(nb, flat[, c(-14)])
-t = table(pred=p,true=flat$over_50k)
-1 - ((t[1, 1] + t[2, 2])/sum(t))
-#error of .172, basically same as the random forest.
+p = predict(nb, flat[validate, c(-14)])
+t = table(pred=p,true=flat[validate,]$over_50k)
+#error of 0.176, same as the random forest.
 
 ```
 
-split in to test training and validation
+The logisitic regression model has an error rate of `r 1 -  sum(perc)/length(validate)`. The Random Forest has a mean error rate of `r mean(x)`. The Naive Bayes has an error rate of `r 1 - ((t[1, 1] + t[2, 2])/sum(t))`. Given the much lower error rates of the Random Forest and Naive Bayes classifier, tuning the parameters of the forest is likely to give an improved error rate. 
 
-model to predict over or under 50k
 ```{r final_model, echo = FALSE}
-
+rf = randomForest(over_50k ~ ., mtry = 3, ntree = 500, data = flat, subset = train)
+rf2 = predict(rf, flat[validate,])
 ```
-
+After some tuning of parameters, the error rate of the model is `r 1 - sum(rf2 == flat[validate, ]$over_50k)/length(rf2)`
